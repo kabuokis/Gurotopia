@@ -4,7 +4,7 @@
 
 std::vector<std::pair<short, shouhin>> shouhin_tachi{};
 
-void init_shouhin_tachi()
+void parse_store()
 {
     std::ifstream file("resources/store.txt");
     for (std::string line; std::getline(file, line); )

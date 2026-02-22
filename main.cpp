@@ -1,6 +1,6 @@
 /*
     @copyright gurotopia (c) 2024-05-25
-    @version perent SHA: 14db88c41229c6cbcd20d47ad1bd55e1ff999977 2026-2-16
+    @version perent SHA: 14db88c41229c6cbcd20d47ad1bd55e1ff999977 2026-2-22
 */
 #include "include/pch.hpp"
 #include "include/event_type/__event_type.hpp"
@@ -26,17 +26,10 @@ int main()
     std::printf("openssl/openssl %s\n", OpenSSL_version(OPENSSL_VERSION_STRING));
     
     std::filesystem::create_directory("db");
-    init_shouhin_tachi();
-    g_server_data = init_server_data();
-
-    {
-        std::time_t now = std::time(nullptr);
-        std::tm time = *std::localtime(&now);
-        if (time.tm_mon == 1/*feb*/ && (time.tm_mday >= 13 && time.tm_mday <= 13+7)) holiday = H_VALENTINES; // @note Valentine's Week
-    } // @note delete now, time
 
     enet_initialize();
     {
+        g_server_data = init_server_data();
         ENetAddress address{
             .type = ENET_ADDRESS_TYPE_IPV4, 
             .port = g_server_data.port
@@ -49,23 +42,9 @@ int main()
     host->checksum = enet_crc32;
     enet_host_compress_with_range_coder(host);
 
-    try // @note for people who don't use a debugger···
-    {
-        const int size = std::filesystem::file_size("items.dat");
-        im_data = compress_state(::state{
-            .type = 0x10, 
-            .peer_state = 0x08, 
-            .size = size
-        });
-
-        im_data.resize(im_data.size() + size); // @note resize to fit binary data
-        std::ifstream("items.dat", std::ios::binary)
-            .read(reinterpret_cast<char*>(&im_data[sizeof(::state)]), size); // @note the binary data···
-
-        cache_items();
-    } // @note delete size
-    catch (std::filesystem::filesystem_error error) { puts(error.what()); }
-    catch (...) { puts("unknown error occured during decoding items.dat"); } // @note if this appears, it's probably cache_items()···
+    decode_items();      // @note reads items.dat into legible class members (id, item name, ect)
+    parse_store();       // @todo thread loop this so the store can update without restarting server (stored in .\resource\store.txt)
+    check_for_holiday(); // @note check for any holidays using local time (your VPS or local time) - @todo thread loop so it can change the holiday without restarting
 
     ENetEvent event{};
     while (true)

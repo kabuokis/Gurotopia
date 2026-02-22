@@ -1,168 +1,164 @@
 #pragma once
-#ifndef PEER_HPP
-#define PEER_HPP
 
-    /* id, count */
-    struct slot {
-        slot(short _id, short _count) : id(_id), count(_count) {}
-        short id{0};
-        short count{0}; // @note total amount of that item
-    };
+/* id, count */
+struct slot {
+    slot(short _id, short _count) : id(_id), count(_count) {}
+    short id{0};
+    short count{0}; // @note total amount of that item
+};
 
-    #include <cmath> // @todo
+#include <cmath> // @todo
 
-    /* x, y */
-    struct pos {
-        pos(int _x, int _y) : x(_x), y(_y) {}
-        pos(float _x, float _y) : x(std::round(_x / 32.0f)), y(std::round(_y / 32.0f)) {}
+/* x, y */
+struct pos {
+    pos(int _x, int _y) : x(_x), y(_y) {}
+    pos(float _x, float _y) : x(std::round(_x / 32.0f)), y(std::round(_y / 32.0f)) {}
 
-        int x{0};
-        int y{0};
-        
-        float f_x() const { return this->x * 32.0f; }
-        float f_y() const { return this->y * 32.0f; }
-
-        auto operator<=>(const pos&) const = default;
-    };
-
-    struct Billboard {
-        short id{0}; // @note the item they're selling
-        bool show{};
-        bool isBuying{};
-        int price{1};
-        bool perItem{}; // @note true if world locks per item, false if items per world lock
-    };
-
-    struct Friend {
-        std::string name{};
-        bool ignore{};
-        bool block{};
-        bool mute{};
-    };
-
-    enum role : u_char {
-        PLAYER, 
-        MODERATOR, 
-        DEVELOPER
-    };
-
-    enum pstate : int
-    {
-        S_GHOST       = 0x00000001,
-        S_DOUBLE_JUMP = 0x00000002,
-        S_DUCT_TAPE   = 0x00002000
-    };
+    int x{0};
+    int y{0};
     
-    #include <deque>
-    #include <array>
+    float f_x() const { return this->x * 32.0f; }
+    float f_y() const { return this->y * 32.0f; }
 
-    class peer {
-    public:
-        peer& read(const std::string& name);
+    auto operator<=>(const pos&) const = default;
+};
 
-        bool exists(const std::string& name); // @note check if peer exists in database
+struct Billboard {
+    short id{0}; // @note the item they're selling
+    bool show{};
+    bool isBuying{};
+    int price{1};
+    bool perItem{}; // @note true if world locks per item, false if items per world lock
+};
 
-        int netid{ 0 }; // @note peer's netid is world identity. this will be useful for many packet sending
-        int user_id{}; // @note unqiue user id.
-        std::array<std::string, 2zu> ltoken{}; // @note {growid, password}
-        std::string game_version{};
-        std::string country{};
-        std::string prefix{ "w" }; // @note display name color, default: "w" (White)
-        u_char role{};
-        std::array<float, 10zu> clothing{}; // @note peer's clothing {id, clothing::}
-        u_char punch_effect{}; // @note last equipped clothing that has a effect. supporting 0-255 effects.
+struct Friend {
+    std::string name{};
+    bool ignore{};
+    bool block{};
+    bool mute{};
+};
 
-        u_int skin_color{ 2527912447 };
+enum role : u_char {
+    PLAYER, 
+    MODERATOR, 
+    DEVELOPER
+};
 
-        int state{}; // @note using pstate::
+enum pstate : int
+{
+    S_GHOST       = 0x00000001,
+    S_DOUBLE_JUMP = 0x00000002,
+    S_DUCT_TAPE   = 0x00002000
+};
 
-        Billboard billboard{};
+#include <deque>
+#include <array>
 
-        ::pos pos{0,0}; // @note position 1D {x, y}
-        ::pos rest_pos{0,0}; // @note respawn position {x, y}
-        bool facing_left{}; // @note peer is directed towards the left direction
+class peer {
+public:
+    peer& read(const std::string& name);
 
-        short slot_size{16}; // @note amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size()
-        std::vector<slot> slots{}; // @note an array of each slot. storing {id, count}
-        /*
-        * @brief set slot::count to nagative value if you want to remove an amount. 
-        * @return the remaining amount if exeeds 200. e.g. emplace(slot{0, 201}) returns 1.
-        */
-        short emplace(slot s);
-        std::vector<short> fav{};
+    bool exists(const std::string& name); // @note check if peer exists in database
 
-        signed gems{0};
-        std::array<u_short, 2zu> level{ 1, 0 }; // {level, xp} XP formula credits: https://www.growtopiagame.com/forums/member/553046-kasete
-        /*
-        * @brief add XP safely, this function also handles level up.
-        */
-        void add_xp(ENetEvent &event, u_short value);
+    int netid{ 0 }; // @note peer's netid is world identity. this will be useful for many packet sending
+    int user_id{}; // @note unqiue user id.
+    std::array<std::string, 2zu> ltoken{}; // @note {growid, password}
+    std::string game_version{};
+    std::string country{};
+    std::string prefix{ "w" }; // @note display name color, default: "w" (White)
+    u_char role{};
+    std::array<float, 10zu> clothing{}; // @note peer's clothing {id, clothing::}
+    u_char punch_effect{}; // @note last equipped clothing that has a effect. supporting 0-255 effects.
 
-        std::array<std::string, 6zu> recent_worlds{}; // @note recent worlds, a list of 6 worlds, once it reaches 7 it'll be replaced by the oldest
-        std::array<std::string, 200zu> my_worlds{}; // @note first 200 relevant worlds locked by peer.
-        
-        std::deque<std::chrono::steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
+    u_int skin_color{ 2527912447 };
 
-        std::array<Friend, 25> friends;
+    int state{}; // @note using pstate::
 
-        u_short fires_removed{};
-        u_short gbc_pity{}; // @note GBC pity; for each 100 will receive super GBC
-        
-        ~peer();
-    };
+    Billboard billboard{};
 
-    extern ENetHost* host;
+    ::pos pos{0,0}; // @note position 1D {x, y}
+    ::pos rest_pos{0,0}; // @note respawn position {x, y}
+    bool facing_left{}; // @note peer is directed towards the left direction
 
-    #include <functional>
+    short slot_size{16}; // @note amount of slots this peer has | were talking total slots not itemed slots, to get itemed slots do slot.size()
+    std::vector<slot> slots{}; // @note an array of each slot. storing {id, count}
+    /*
+    * @brief set slot::count to nagative value if you want to remove an amount. 
+    * @return the remaining amount if exeeds 200. e.g. emplace(slot{0, 201}) returns 1.
+    */
+    short emplace(slot s);
+    std::vector<short> fav{};
 
-    enum peer_condition
-    {
-        PEER_ALL, // @note all peer(s)
-        PEER_SAME_WORLD // @note only peer(s) in the same world as ENetEvent::peer
-    };
+    signed gems{0};
+    std::array<u_short, 2zu> level{ 1, 0 }; // {level, xp} XP formula credits: https://www.growtopiagame.com/forums/member/553046-kasete
+    /*
+    * @brief add XP safely, this function also handles level up.
+    */
+    void add_xp(ENetEvent &event, u_short value);
 
-    extern std::vector<ENetPeer*> peers(const std::string &world = "", peer_condition condition = PEER_ALL, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});
+    std::array<std::string, 6zu> recent_worlds{}; // @note recent worlds, a list of 6 worlds, once it reaches 7 it'll be replaced by the oldest
+    std::array<std::string, 200zu> my_worlds{}; // @note first 200 relevant worlds locked by peer.
+    
+    std::deque<std::chrono::steady_clock::time_point> messages; // @note last 5 que messages sent time, this is used to check for spamming
 
-    extern void safe_disconnect_peers(int signal);
+    std::array<Friend, 25> friends;
 
-    class state {
-    public:
-        int packet_create{ 04 };
+    u_short fires_removed{};
+    u_short gbc_pity{}; // @note GBC pity; for each 100 will receive super GBC
+    
+    ~peer();
+};
 
-        int type{};
-        int netid{};
-        int uid{}; // @todo understand this better @note so far I think this holds uid value
-        int peer_state{};
-        float count{}; // @todo understand this better
-        int id{}; // @note peer's active hand, so 18 (fist) = punching, 32 (wrench) interacting, ect
-        ::pos pos{0,0}; // @note position 1D {x, y}
-        std::array<float, 2zu> speed{}; // @note player movement (velocity(x), gravity(y)), higher gravity = smaller jumps
-        int idk{};
-        ::pos punch{0,0}; // @note punching/placing position 2D {x, y}
-        int size{};
-    };
+extern ENetHost* host;
 
-    enum packet_pos
-    {
-        P_INIT,
-        P_TYPE       = 4zu,
-        P_NETID      = P_TYPE*2,
-        P_UID        = P_TYPE*3,
-        P_PEER_STATE = P_TYPE*4,
-        P_COUNT      = P_TYPE*5,
-        P_ID         = P_TYPE*6,
-        P_POS        = P_TYPE*7, // @note 8 bit
-        P_SPEED      = P_TYPE*9, // @note 8 bit
-        P_IDK        = P_TYPE*11,
-        P_PUNCH      = P_TYPE*12, // @note 8 bit
-        P_SIZE       = P_TYPE*14
-    };
+#include <functional>
 
-    extern state get_state(const std::vector<u_char> &&packet);
+enum peer_condition
+{
+    PEER_ALL, // @note all peer(s)
+    PEER_SAME_WORLD // @note only peer(s) in the same world as ENetEvent::peer
+};
 
-    /* put it back into it's original form */
-    extern std::vector<u_char> compress_state(const state &s);
+extern std::vector<ENetPeer*> peers(const std::string &world = "", peer_condition condition = PEER_ALL, std::function<void(ENetPeer&)> fun = [](ENetPeer& peer){});
 
-    extern void send_inventory_state(ENetEvent &event);
+extern void safe_disconnect_peers(int signal);
 
-#endif
+class state {
+public:
+    int packet_create{ 04 };
+
+    int type{};
+    int netid{};
+    int uid{}; // @todo understand this better @note so far I think this holds uid value
+    int peer_state{};
+    float count{}; // @todo understand this better
+    int id{}; // @note peer's active hand, so 18 (fist) = punching, 32 (wrench) interacting, ect
+    ::pos pos{0,0}; // @note position 1D {x, y}
+    std::array<float, 2zu> speed{}; // @note player movement (velocity(x), gravity(y)), higher gravity = smaller jumps
+    int idk{};
+    ::pos punch{0,0}; // @note punching/placing position 2D {x, y}
+    int size{};
+};
+
+enum packet_pos
+{
+    P_INIT,
+    P_TYPE       = 4zu,
+    P_NETID      = P_TYPE*2,
+    P_UID        = P_TYPE*3,
+    P_PEER_STATE = P_TYPE*4,
+    P_COUNT      = P_TYPE*5,
+    P_ID         = P_TYPE*6,
+    P_POS        = P_TYPE*7, // @note 8 bit
+    P_SPEED      = P_TYPE*9, // @note 8 bit
+    P_IDK        = P_TYPE*11,
+    P_PUNCH      = P_TYPE*12, // @note 8 bit
+    P_SIZE       = P_TYPE*14
+};
+
+extern state get_state(const std::vector<u_char> &&packet);
+
+/* put it back into it's original form */
+extern std::vector<u_char> compress_state(const state &s);
+
+extern void send_inventory_state(ENetEvent &event);

@@ -1,4 +1,6 @@
 #include "pch.hpp"
+#include <filesystem>
+
 #include "items.hpp"
 
 std::vector<item> items;
@@ -23,8 +25,19 @@ void data_modify(std::vector<u_char> &data, const u_int &pos, const T &value)
         data[pos + i] = _1bit[i];
 }
 
-void cache_items()
+void decode_items()
 {
+    const int size = std::filesystem::file_size("items.dat");
+    im_data = compress_state(::state{
+        .type = 0x10, 
+        .peer_state = 0x08, 
+        .size = size
+    });
+
+    im_data.resize(im_data.size() + size); // @note resize to fit binary data
+    std::ifstream("items.dat", std::ios::binary)
+        .read(reinterpret_cast<char*>(&im_data[sizeof(::state)]), size); // @note the binary data···
+
     u_int pos{ sizeof(::state) };
     u_char version{};
     shift_pos(im_data, pos, version); pos += 1; // @note downsize 'version' to 1 bit

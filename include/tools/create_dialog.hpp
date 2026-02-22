@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TOOLS_CREATE_DIALOG_HPP
-#define TOOLS_CREATE_DIALOG_HPP
 
 class create_dialog
 {
@@ -33,5 +31,3 @@ public:
 
     std::string end_dialog(std::string btn_id, std::string btn_close = "Cancel", std::string btn_return = "OK");
 };
-
-#endif

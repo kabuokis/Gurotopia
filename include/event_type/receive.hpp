@@ -1,7 +1,3 @@
 #pragma once
-#ifndef RECEIVE_HPP
-#define RECEIVE_HPP
 
-    extern void receive(ENetEvent& event);
-
-#endif
+extern void receive(ENetEvent& event);

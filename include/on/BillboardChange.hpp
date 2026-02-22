@@ -1,9 +1,6 @@
-#ifndef BILLBOARDCHANGE_HPP
-#define BILLBOARDCHANGE_HPP
+#pragma once
 
-    namespace on
-    {
-        extern void BillboardChange(ENetEvent& event);
-    }
-
-#endif
+namespace on
+{
+    extern void BillboardChange(ENetEvent& event);
+}
