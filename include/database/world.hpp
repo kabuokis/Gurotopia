@@ -102,6 +102,8 @@ public:
     std::vector<::object> objects{};
     std::vector<::door> doors{};
     std::vector<::display> displays{};
+
+    ::pos 现weather{0, 0};
     ~world();
 };
 extern std::unordered_map<std::string, world> worlds;

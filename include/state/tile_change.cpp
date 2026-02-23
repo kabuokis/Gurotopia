@@ -131,13 +131,12 @@ void tile_change(ENetEvent& event, state state)
                 }
                 case type::WEATHER_MACHINE:
                 {
-                    for (::block &b : world.blocks)
-                    {
-                        auto item = std::ranges::find(items, b.fg, &::item::id);
-                        if (item->type == type::WEATHER_MACHINE && item->id != block.fg) 
-                            b.state3 &= ~S_TOGGLE;
-                    }
-                    block.state3 ^= S_TOGGLE;
+                    ::block &weather_machine = world.blocks[cord(world.现weather.x, world.现weather.y)];
+
+                    if (!(block.state3 & S_TOGGLE) && !(weather_machine.state3 & S_TOGGLE)) weather_machine.state3 &= ~S_TOGGLE; // @note so we can avoid the upcoming ^= if the weather machine is already toggled
+                    block.state3 ^= S_TOGGLE; // @note if punched twice it can detoggle that is why we use ^= not |=
+                    
+                    world.现weather = state.punch;
                     
                     peers(peer->recent_worlds.back(), PEER_SAME_WORLD, [block, item](ENetPeer& p)
                     {

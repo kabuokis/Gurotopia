@@ -29,7 +29,7 @@ void action::enter_game(ENetEvent& event, const std::string& header)
         std::format("Welcome back, `{}{}````. No friends are online.", 
             peer->prefix, peer->ltoken[0]).c_str()
     }); 
-    if (holiday == H_VALENTINES) packet::create(*event.peer, false, 0, {"OnConsoleMessage", "``4Happy Valentine's Week!``"});
+    packet::create(*event.peer, false, 0, {"OnConsoleMessage", holiday_greeting().second});
 
     packet::create(*event.peer, false, 0, {"OnConsoleMessage", "`5Personal Settings active:`` `#Can customize profile``"});
     
@@ -41,8 +41,7 @@ void action::enter_game(ENetEvent& event, const std::string& header)
     packet::create(*event.peer, false, 0, {"SetHasGrowID", 1, peer->ltoken[0].c_str(), ""}); 
 
     {
-        std::time_t now = std::time(nullptr);
-        std::tm time = *std::localtime(&now);
+        std::tm time = localtime();
         std::vector<std::string> month = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
         packet::create(*event.peer, false, 0, {
@@ -68,7 +67,7 @@ void action::enter_game(ENetEvent& event, const std::string& header)
                     (time.tm_mday >= 11 && time.tm_mday <= 13) ? "th" :
                     (time.tm_mday % 10 == 1) ? "st" :
                     (time.tm_mday % 10 == 2) ? "nd" :
-                    (time.tm_mday % 10 == 3) ? "rd" : "th", (holiday == H_VALENTINES) ? "`5Valentine's Week!``" : ""))
+                    (time.tm_mday % 10 == 3) ? "rd" : "th", holiday_greeting().first))
                 .add_spacer("small")
                 /* IOTM goes here. but it's P2W, so i will not add. */
                 .add_textbox("Love is popping, hearts are dropping, and we are officially in the `@Valentine's`` spirit! `@Valentine's Week`` has arrived, bringing sweet surprises, shiny rewards ready to steal your heart!")

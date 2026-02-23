@@ -54,21 +54,13 @@ void tile_activate(ENetEvent& event, state state)
         }
         case type::CHECKPOINT:
         {
+            ::block &checkpoint = world.blocks[cord(peer->rest_pos.x, peer->rest_pos.y)]; // @note get previous checkpoint from respawn position
+
+            checkpoint.state3 &= ~S_TOGGLE;
+            send_tile_update(event, ::state{.id = block.fg/*has to be 'block' or else iterfere with main door*/, .punch = peer->rest_pos}, checkpoint, world);
+
             peer->rest_pos = state.punch;
-
-            int i{};
-            for (::block &b : world.blocks)
-            {
-                auto item = std::ranges::find(items, b.fg, &::item::id);
-                if (item->type == type::CHECKPOINT) 
-                {
-                    b.state3 &= ~S_TOGGLE; // @note untoggle other checkpoints
-                    send_tile_update(event, ::state{.id = b.fg, .punch = {i % 100, i / 100}}, b, world);
-                }
-                ++i;
-            }
             block.state3 |= S_TOGGLE; // @note toggle current checkpoint
-
             send_tile_update(event, ::state{.id = block.fg, .punch = state.punch}, block, world);
             break;
         }
